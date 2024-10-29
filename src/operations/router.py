@@ -1,6 +1,11 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, insert
 
+from database import get_async_session
+from operations.models import operation
 
-from fastapi import APIRouter
+from operations.schemas import OperationCreate
 
 
 router = APIRouter(
@@ -10,5 +15,15 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_operations():
-    return
+async def get_specific_operations(operation_type = str, session: AsyncSession = Depends(get_async_session)):
+    query = select(operation).where(operation.c.type == operation_type)
+    result = await session.execute(query)
+    return result.all()
+
+
+@router.post("/")
+async def add_specific_operations(new_operation: OperationCreate, session: AsyncSession = Depends(get_async_session)):
+    stmt = insert(operation).values(**new_operation.dict())
+    await session.execute(stmt)
+    await session.commit()
+    return {"status": "success"}
