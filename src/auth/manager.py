@@ -1,9 +1,10 @@
 from typing import Optional
 
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, IntegerIDMixin, models, schemas, exceptions
+from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions, models, schemas
 
-from auth.database import User, get_user_db
+from auth.models import User
+from auth.utils import get_user_db
 
 from config import SECRET_AUTH
 
@@ -15,14 +16,12 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
 
-
     async def create(
         self,
         user_create: schemas.UC,
         safe: bool = False,
         request: Optional[Request] = None,
     ) -> models.UP:
-
         await self.validate_password(user_create.password, user_create)
 
         existing_user = await self.user_db.get_by_email(user_create.email)
